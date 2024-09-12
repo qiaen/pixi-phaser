@@ -37,14 +37,21 @@ function init() {
 		},
 		scene: {
 			preload: function () {
-				this.load.image('space', 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png')
+				// this.load.image('space', 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png')
+				this.load.image({
+					key: 'space',
+					url: 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png',
+					frameConfig: {
+						frameWidth: 1800, frameHeight: 600
+					}
+				})
 				this.load.image('logo', 'https://homework-prod.oss-accelerate.aliyuncs.com/phaser2.png')
 			},
 			create: function () {
 				// console.log(game)
 				// console.log(this)
-				let spacebg = this.add.sprite(400, 300, 'space')
-				spacebg.scale = 1.4
+				let spacebg = this.add.sprite(400, 300, 'space', 200)
+				// spacebg.scale = 1.6
 				console.log(spacebg)
 
 				let logo = this.add.sprite(game.config.width / 2, game.config.height / 2, 'logo')
@@ -80,6 +87,7 @@ function init() {
 				// console.log(this.)
 				this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
 					console.log(pointer)
+					pointer.distance = 2
 					console.log(gameObjects)
 					// if (deltaY > 0) {
 					// 	var newZoom = this.camera.zoom - 0.1
