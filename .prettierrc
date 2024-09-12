@@ -1,0 +1,11 @@
+{
+    "clickHereSeeMore": "https://juejin.cn/post/6974221744349380622",
+	"tabWidth": 4,
+    "useTabs": true,
+	"bracketSpacing": true,
+	"singleQuote": true,
+	"semi": false,
+	"trailingComma": "none",
+	"printWidth": 400,
+    "arrowParens": "avoid"
+}

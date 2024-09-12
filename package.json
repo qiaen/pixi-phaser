@@ -1,0 +1,23 @@
+{
+	"name": "pixi-show",
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build"
+	},
+	"dependencies": {
+		"gsap": "^3.12.5",
+		"phaser": "^3.85.1",
+		"pixi.js": "^8.3.4",
+		"vue": "^3.2.33",
+		"vue-router": "^4.0.14"
+	},
+	"devDependencies": {
+		"@types/node": "^18.15.11",
+		"@vitejs/plugin-vue": "^4.1.0",
+		"sass": "^1.62.0",
+		"terser": "^5.17.6",
+		"vite": "^4.2.1"
+	}
+}
