@@ -8,24 +8,6 @@ import Phaser from 'phaser'
 let { Game } = Phaser
 
 function init() {
-	// let game = new Game(800, 600, Phaser.AUTO, 'example1', {
-	// 	preload: function () {
-	// 		game.load.image('space', 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png', 138, 15)
-	// 		game.load.image('logo', 'https://homework-prod.oss-accelerate.aliyuncs.com/phaser2.png')
-	// 	},
-	// 	create: function () {
-	// 		// tile是瓦片的意思
-	// 		game.add.tileSprite(0, 0, 800, 600, 'space')
-	// 		let sprite = game.add.sprite(game.world.centerX, game.world.centerY, 'logo')
-	// 		sprite.anchor.setTo(0.5, 0.5)
-	// 		// 设置透明度
-	// 		sprite.alpha = 0
-	// 		// 创建一个tween，2s内alpha变为1，自动开始，延时0s，一直重复
-	// 		let tween = game.add.tween(sprite).to({ alpha: 1 }, 2000, 'Linear', true, 0, -1)
-	// 		// yoyo会在下一次动画前会先把alpha再变为0，3000代表3s后执行yoyo动画
-	// 		tween.yoyo(true, 3000)
-	// 	}
-	// })
 	let game = new Game({
 		type: Phaser.AUTO,
 		parent: 'example1',
@@ -40,22 +22,22 @@ function init() {
 				// this.load.image('space', 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png')
 				this.load.image({
 					key: 'space',
-					url: 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png',
-					frameConfig: {
-						frameWidth: 1800, frameHeight: 600
-					}
+					url: 'https://homework-prod.oss-accelerate.aliyuncs.com/starfield.png'
 				})
 				this.load.image('logo', 'https://homework-prod.oss-accelerate.aliyuncs.com/phaser2.png')
 			},
 			create: function () {
 				// console.log(game)
 				// console.log(this)
-				let spacebg = this.add.sprite(400, 300, 'space', 200)
-				// spacebg.scale = 1.6
-				console.log(spacebg)
+				let sb = this.add.sprite(400, 300, 'space')
+				// 用image也可以，参数一致，目前发现效果一致，scale都会导致显示宽度失效
+				// let sb = this.add.image(400, 300, 'space')
+				sb.displayWidth = 800
+				sb.displayHeight = 600
+				// 尺寸被设置后，缩放会导致宽高显示为原始宽高
+				// sb.scale = 1
 
 				let logo = this.add.sprite(game.config.width / 2, game.config.height / 2, 'logo')
-
 				logo.alpha = 0
 				let w = this.tweens.add({
 					targets: logo,
@@ -64,7 +46,8 @@ function init() {
 					// loop: true,
 					// 重复的次数，不停止
 					repeat: -1,
-					yoyo: true
+					yoyo: true,
+					// rotation: 10
 					// scale: 0.5
 				})
 				w.on('start', () => {
@@ -73,7 +56,7 @@ function init() {
 				w.on('complete', () => {
 					console.log('---动画完毕')
 				})
-				// 必须的
+				// 必须的，添加事件用
 				logo.setInteractive()
 				this.input.setDraggable(logo)
 				this.input.dragDistanceThreshold = 10

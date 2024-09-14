@@ -22,6 +22,46 @@ const router = createRouter({
 			path: '/phaser/1',
 			name: 'phaser-c1',
 			component: () => import(`../views/phaser/1.vue`)
+		},
+		{
+			path: '/phaser/3',
+			name: 'phaser-c3',
+			component: () => import(`../views/phaser/3.vue`)
+		},
+		{
+			path: '/phaser/4',
+			name: 'phaser-c4',
+			component: () => import(`../views/phaser/4.vue`)
+		},
+		{
+			path: '/phaser/5',
+			name: 'phaser-c5',
+			component: () => import(`../views/phaser/5.vue`)
+		},
+		{
+			path: '/offical',
+			name: 'offical-c1',
+			component: () => import(`../views/phaser/offical/index.vue`)
+		},
+		{
+			path: '/shuibowen',
+			name: 'shuibowen-c1',
+			component: () => import(`../views/shuibowen.vue`)
+		},
+		{
+			path: '/color-matrix',
+			name: 'color-matrix-c1',
+			component: () => import(`../views/filters/color-matrix.vue`)
+		},
+		{
+			path: '/displacementSprite',
+			name: 'displacementSprite-c1',
+			component: () => import(`../views/filters/displacementSprite.vue`)
+		},
+		{
+			path: '/displacementMapFlag',
+			name: 'displacementMapFlag-c1',
+			component: () => import(`../views/filters/displacementMapFlag.vue`)
 		}
 	]
 	
