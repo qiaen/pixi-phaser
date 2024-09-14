@@ -62,6 +62,11 @@ const router = createRouter({
 			path: '/displacementMapFlag',
 			name: 'displacementMapFlag-c1',
 			component: () => import(`../views/filters/displacementMapFlag.vue`)
+		},
+		{
+			path: '/suibowen',
+			name: 'suibowen-c1',
+			component: () => import(`../views/filters/suibowen.vue`)
 		}
 	]
 	
