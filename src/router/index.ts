@@ -67,6 +67,16 @@ const router = createRouter({
 			path: '/suibowen',
 			name: 'suibowen-c1',
 			component: () => import(`../views/filters/suibowen.vue`)
+		},
+		{
+			path: '/suibowen-click',
+			name: 'suibowen-c2',
+			component: () => import(`../views/filters/suibowen-click.vue`)
+		},
+		{
+			path: '/graphics/gradient',
+			name: 'graphics-gradient',
+			component: () => import(`../views/graphics/gradient.vue`)
 		}
 	]
 	

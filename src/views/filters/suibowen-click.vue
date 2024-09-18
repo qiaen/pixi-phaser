@@ -40,17 +40,17 @@ class Game {
 				y: 120
 			}
 		})
-		this.contain.addChild(mask)
+		// this.contain.addChild(mask)
 		// console.log(this.contain.filters)
 		// 不能使用push，也不能使用【0】=xxx，必须替换
-		this.contain.filters = [filter]
+		// this.contain.filters = [filter]
 		
 		this.mask = mask
 		this.render()
 	}
 	render() {
 		this.app.ticker.add(() => {
-			let swf1 = this.contain.filters[1]
+			let swf1 = this.contain.filters[0]
 			if (swf1) {
 				swf1.time += 0.01
 			}
@@ -91,10 +91,10 @@ class Game {
 				// 波长
 				wavelength: 110,
 				// 振幅
-				amplitude: 15,
+				amplitude: 8,
 				time: 0
 			})
-			this.contain.filters = [this.contain.filters[0], swf1]
+			this.contain.filters = [swf1]
 		})
 	}
 }
