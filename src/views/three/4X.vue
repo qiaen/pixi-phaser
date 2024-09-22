@@ -1,5 +1,5 @@
 <template>
-	<!-- 画一个简单的线条 -->
+	<!-- 复杂的文字特效，可以上下左右拖动 -->
 	<div ref="refDiv"></div>
 </template>
 <script setup>

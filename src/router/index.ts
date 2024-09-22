@@ -90,6 +90,14 @@ const router = createRouter({
 		{
 			path: '/three/5',
 			component: () => import(`../views/three/5.vue`)
+		},
+        {
+			path: '/three/6',
+			component: () => import(`../views/three/6.vue`)
+		},
+        {
+			path: '/three/su7',
+			component: () => import(`../views/three/su7.vue`)
 		}
 	]
 	
