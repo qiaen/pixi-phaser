@@ -98,6 +98,18 @@ const router = createRouter({
         {
 			path: '/three/su7',
 			component: () => import(`../views/three/su7.vue`)
+		},
+        {
+			path: '/three/sprite',
+			component: () => import(`../views/three/sprite.vue`)
+		},
+        {
+			path: '/three/rob',
+			component: () => import(`../views/three/rob.vue`)
+		},
+        {
+			path: '/zw',
+			component: () => import(`../views/zw/index.vue`)
 		}
 	]
 	
