@@ -110,6 +110,18 @@ const router = createRouter({
         {
 			path: '/zw',
 			component: () => import(`../views/zw/index.vue`)
+		},
+		{
+			path: '/three/walker',
+			component: () => import(`../views/three/walker.vue`)
+		},
+		{
+			path: '/three/walkerbg',
+			component: () => import(`../views/three/walkerbg.vue`)
+		},
+		{
+			path: '/three/walkerBone',
+			component: () => import(`../views/three/walkerBone.vue`)
 		}
 	]
 	
