@@ -116,12 +116,24 @@ const router = createRouter({
 			component: () => import(`../views/three/walker.vue`)
 		},
 		{
+			path: '/three/walker-shot',
+			component: () => import(`../views/three/walker-shot.vue`)
+		},
+		{
 			path: '/three/walkerbg',
 			component: () => import(`../views/three/walkerbg.vue`)
 		},
 		{
 			path: '/three/walkerBone',
 			component: () => import(`../views/three/walkerBone.vue`)
+		},
+		{
+			path: '/three/attack',
+			component: () => import(`../views/three/attack.vue`)
+		},
+		{
+			path: '/three/attack-source',
+			component: () => import(`../views/three/attack-source.vue`)
 		}
 	]
 	

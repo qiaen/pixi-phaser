@@ -18,6 +18,7 @@ let clock = null
 let model = null
 let mixer = null
 let stats = null
+let grid = null
 let skeleton = null
 function init() {
 	camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.25, 1000)
@@ -43,16 +44,16 @@ function init() {
 
 	// 地面ground
 	let plane = new THREE.PlaneGeometry(2000, 2000)
-	let net = new THREE.MeshPhongMaterial({
+	let dimian = new THREE.MeshPhongMaterial({
 		color: 0xcbcbcb,
 		depthWrite: false
 	})
-	let groud = new THREE.Mesh(plane, net)
+	let groud = new THREE.Mesh(plane, dimian)
 	groud.rotation.x = -Math.PI / 2
 	groud.receiveShadow = true
 	scene.add(groud)
-
-	let grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000)
+	// 网格
+	grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000)
 	grid.material.opacity = 0.2
 	grid.material.transparent = true
 	scene.add(grid)
@@ -63,6 +64,8 @@ function init() {
 		'/img/RobotExpressive.glb',
 		gltf => {
 			model = gltf.scene
+			// 配合下面的动画可以让小人从远处走过来
+			// model.position.z = -40
 			scene.add(model)
 			createGUI(model, gltf.animations)
 			model.traverse(object => {
@@ -111,7 +114,7 @@ let api = {
 }
 let face = null
 function createGUI(model, animations) {
-	console.log(animations)
+	// console.log(animations)
 	let states = ['Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing', 'WalkJump']
 	// 只执行一次的动作
 	let emotes = ['Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp']
@@ -152,7 +155,7 @@ function createGUI(model, animations) {
 
 	// ['Angry', 'Surprised', 'Sad']
 	let expressions = Object.keys(face.morphTargetDictionary)
-	console.log(face)
+	// console.log(face)
 	let expressionFolder = gui.addFolder('Expressions')
 	
 	for (let i = 0; i < expressions.length; i++) {
@@ -192,8 +195,19 @@ function fadeToAction(name, duration) {
 function animate() {
 	let dt = clock.getDelta()
 	if (mixer) {
+		// console.log(activeAction)
 		mixer.update(dt)
+		// 配合下面的动画可以让小人从远处走过来
+		// model.position.z += 0.07
+		if(['Walking', 'Jump'].includes(activeAction._clip.name)) {
+			grid.position.z -= 0.05
+		}
+		if(['Running'].includes(activeAction._clip.name)) {
+			grid.position.z -= 0.07
+		}
+		
 	}
+	
 	renderModel()
 	stats.update()
 }

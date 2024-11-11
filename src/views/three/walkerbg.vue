@@ -77,6 +77,7 @@ function init() {
 	// scene.add(grid)
 
 	// 加载环境，
+	// new RGBELoader().setPath('/img').load('/donghai.jpeg', function (texture) {
 	new RGBELoader().setPath('https://threejs.org/examples/textures/equirectangular/').load('royal_esplanade_1k.hdr', function (texture) {
 		texture.mapping = THREE.EquirectangularReflectionMapping
 
