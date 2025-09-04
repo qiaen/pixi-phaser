@@ -17,8 +17,8 @@ let src = computed(() => {
 let style = computed(() => {
 	let { col, row } = data.value
 	return {
-		left: `${380 + col * 74}px`,
-		top: `${62 + row * 90}px`
+		left: `${300 + col * 100}px`,
+		top: `${72 + row * 100}px`
 	}
 })
 </script>

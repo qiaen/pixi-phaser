@@ -8,7 +8,7 @@ let style = computed(() => {
     let { row, x } = props.data
     return {
         left: `${x}px`,
-        top: `${98 + row * 90}px`
+        top: `${98 + row * 100}px`
     }
 })
 </script>

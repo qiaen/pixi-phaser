@@ -1,6 +1,6 @@
 <template>
-	<div class="plant" :style="style">
-		<img :src="src" @drag="drag" @dragover="dragover" @drop="drop" draggable />
+	<div class="plant" :style="style" @drag="drag" @dragover="dragover" @drop="drop">
+		<img :src="src" draggable />
 		<div class="num">{{ Math.pow(2, data.level - 1) }}</div>
 	</div>
 </template>
@@ -17,8 +17,8 @@ let src = computed(() => {
 let style = computed(() => {
 	let { col, row, show } = data.value
 	return {
-		left: `${236 + col * 74}px`,
-		top: `${62 + row * 90}px`,
+		left: `${252 + col * 80}px`,
+		top: `${72 + row * 100}px`,
         opacity: show ? 1 : 0
 	}
 })
@@ -53,11 +53,13 @@ function drop() {
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+	// box-shadow: 0 0 5px rgba(0,0,0,0.5);
 	.num {
 		font-weight: bolder;
 	}
 	img {
 		width: 70%;
+		margin-top: 10px;
 	}
 	&:-webkit-drag-over {
 		background-color: rgba(0, 0, 0, 0.2);
