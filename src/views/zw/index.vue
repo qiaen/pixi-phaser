@@ -6,7 +6,7 @@
 		<source src="/zw/bz.mp3" type="audio/mpeg" />
 	</audio>
 	<div class="card">
-		<img @drag="dragCard" draggable class="" :src="`/zw/lv-${waitPlant.level}.gif`" />
+		<img @drag="dragCard" draggable :src="`/zw/lv-${waitPlant.level}.gif`" />
 		<div>{{ Math.pow(2, waitPlant.level - 1) }}</div>
 	</div>
 	<div class="ground">
