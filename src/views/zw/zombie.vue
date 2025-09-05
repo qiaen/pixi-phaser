@@ -31,6 +31,7 @@ let style = computed(() => {
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+	z-index: 1;
 	.num {
 		font-weight: bolder;
 	}

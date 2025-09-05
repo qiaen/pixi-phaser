@@ -97,13 +97,13 @@ export function genZombie() {
 	}
 	let zs = Array.from(new Set([randomInt(5), randomInt(5), randomInt(5)]))
 	for (let i = 0; i < zs.length; i++) {
-		let lv = randomInt(score.value <= 1000 ? level.value : 17) + 1
+		let lv = randomInt(score.value <= 3000 ? level.value : 17) + 1
 		zombies.value.push({
 			row: zs[i],
 			col: 7,
 			dead: false,
 			level: lv,
-			blood: score.value <= 1000 ? Math.pow(2, lv - 1) : 40 * lv,
+			blood: score.value <= 3000 ? Math.pow(2, lv - 1) : 10 * lv,
 			uid: uid()
 		},)
 	}
