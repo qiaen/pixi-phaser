@@ -11,8 +11,8 @@ let props = defineProps(['data'])
 let emits = defineEmits(['fire'])
 let data = computed(() => props.data || { row: 0, col: 0, level: 0 })
 let src = computed(() => {
-	let { level, dead } = data.value
-	return dead ? `/js/bz.gif` :`/js/lv-${level}.gif`
+	let { dead, pic1 } = data.value
+	return dead ? `/js/bz.gif` : pic1
 })
 let style = computed(() => {
 	let { col, row } = data.value

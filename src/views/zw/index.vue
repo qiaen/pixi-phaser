@@ -8,15 +8,15 @@
 	<div class="game-box" :class="{ isFail }">
 		<div class="top-info">
 			<div class="card">
-				<img @drag="dragCard" draggable :src="`/zw/lv-${waitPlant.level}.gif`" />
-				<div>{{ Math.pow(2, waitPlant.level - 1) }}</div>
+				<img @drag="dragCard" draggable :src="waitPlant.pic1" />
+				<div>{{ waitPlant.blood }}</div>
 			</div>
 			<div class="score-box">
 				<scrollNumber :number="score" color="#fff"></scrollNumber>
 			</div>
 		</div>
 		<div class="ground">
-			<Plant @fire="shot" :data="item" v-for="item in plants" :key="item.uid" />
+			<Plant @fire="shot" :data="item" v-for="item in plantGrounds" :key="item.uid" />
 			<Bullet :data="item" v-for="item in bullets" :key="item.uid" />
 			<Zombie :data="item" v-for="item in zombies" :key="item.uid" />
 		</div>
@@ -30,12 +30,12 @@ import Plant from './plant.vue'
 import Bullet from './bullet.vue'
 import Zombie from './zombie.vue'
 import scrollNumber from './components/scrollNumber.vue'
-import { isFail, score, plants, waitPlant, dragging, zombies, bullets, uid, aniBullet, action, level, aniZoombies, randomInt, genZombie } from './utils'
-
+import { isFail, score, waitPlant, dragging, zombies, bullets, uid, aniBullet, action, level, aniZoombies, genZombie, genPlant } from './utils'
+import { plantGrounds } from './config'
 function shot() {
 	action.value += 1
 	for (let i = 0; i < 5; i++) {
-		let rowPlants = plants.value.filter(item => item.row === i && item.show)
+		let rowPlants = plantGrounds.filter(item => item.row === i && item.show)
 		if (rowPlants.length) {
 			let fp = rowPlants[0]?.level
 			let lp = rowPlants[1]?.level
@@ -61,8 +61,7 @@ function shot() {
 		uid: uid()
 	})
 	aniBullet()
-	waitPlant.value.level = randomInt(level.value) + 1
-	waitPlant.value.uid = uid()
+	waitPlant.value = genPlant()
 	genZombie()
 }
 let zLeft = ref(360)
@@ -127,7 +126,7 @@ onMounted(() => {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	background: url(./images/interface/background1.jpg) no-repeat;
+	background: url(/images/interface/background1.jpg) no-repeat;
 }
 .zombies-won {
 	width: 498px;

@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { ListPlants, ListZombies } from './config'
 export function uid() {
 	let u = ''
 	const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -7,103 +8,61 @@ export function uid() {
 	}
 	return u
 }
+/** 当前进度，是生成植物和僵尸的准则，生成的植物和僵尸，围绕着，process上下2级别浮动 */
+export let process = 0
+/** 植物和僵尸的最大等级 */
+let spriteLev = {
+	zombie: ListPlants.length,
+	plant: ListZombies.length
+}
+/** 该函数会根据传入的数字生成一个在其 ±2 范围内的随机整数，同时确保结果在 1 到 top 之间 */
+function floatLevel(num, top) {
+	let min = num - 2
+	let max = num + 2
+	min = Math.max(min, 0)
+	max = Math.min(max, top)
+	return Math.floor(Math.random() * (max - min + 1)) + min
+}
 export let score = ref(0)
 export let isFail = ref(false)
-export let waitPlant = ref({
-	level: 1
-})
+export let waitPlant = ref(genPlant())
+
+
+
 export let dragging = ref({})
 export let action = ref(0)
 let maxZombieLevel = 17
+
 export let level = computed(() => {
 	return Math.min(7, action.value)
 })
-// row 行，col：列
-export let plants = ref([
-	{
-		row: 0,
-		col: 0,
-		level: 1,
-		show: false,
-		uid: uid()
-	},
-	{
-		row: 0,
-		col: 1,
-		level: 1,
-		uid: uid()
-	},
-	{
-		row: 1,
-		col: 0,
-		level: 1,
-		show: false,
-		uid: uid()
-	},
-	{
-		row: 1,
-		col: 1,
-		level: 1,
-		uid: uid()
-	},
-	{
-		row: 2,
-		col: 0,
-		level: 1,
-		show: false,
-		uid: uid()
-	},
-	{
-		row: 2,
-		col: 1,
-		level: 1,
-		uid: uid()
-	},
-	{
-		row: 3,
-		col: 0,
-		level: 1,
-		show: false,
-		uid: uid()
-	},
-	{
-		row: 3,
-		col: 1,
-		level: 1,
-		uid: uid()
-	},
-	{
-		row: 4,
-		col: 0,
-		level: 1,
-		show: false,
-		uid: uid()
-	},
-	{
-		row: 4,
-		col: 1,
-		level: 1,
-		uid: uid()
-	}
-])
+
 export function randomInt(n) {
 	return Math.floor(Math.random() * n)
 }
 export let zombies = ref([])
 genZombie()
+export function genPlant() {
+	let index = floatLevel(process, spriteLev.plant)
+	return {
+		...ListPlants[index]
+	}
+}
+/** 生成僵尸 */
 export function genZombie() {
-	if (zombies.value.some(item => item.level >= maxZombieLevel + 1)) {
+	if (zombies.value.some(item => item.level >= spriteLev.zombie)) {
 		return console.log('已经到最大了，不再生成')
 	}
 	let zs = Array.from(new Set([randomInt(5), randomInt(5), randomInt(5)]))
 	for (let i = 0; i < zs.length; i++) {
-		let lv = randomInt(score.value <= 3000 ? level.value : 17) + 1
+		let lv = floatLevel(process, spriteLev.zombie)
+		let z = ListZombies[lv]
 		zombies.value.push({
 			row: zs[i],
 			col: 7,
 			dead: false,
 			level: lv,
-			blood: score.value <= 3000 ? Math.pow(2, lv - 1) : 10 * lv,
+			...z,
 			uid: uid()
 		},)
 	}

@@ -1,7 +1,7 @@
 <template>
 	<div class="plant" :style="style" @drag="drag" @dragover="dragover" @drop="drop">
 		<img :src="src" draggable />
-		<div class="num">{{ Math.pow(2, data.level - 1) }}</div>
+		<div class="num">{{ data }}</div>
 	</div>
 </template>
 <script setup>
