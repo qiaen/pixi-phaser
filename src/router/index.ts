@@ -134,6 +134,10 @@ const router = createRouter({
 		{
 			path: '/three/attack-source',
 			component: () => import(`../views/three/attack-source.vue`)
+		},
+		{
+			path: '/zwdzjs',
+			component: () => import(`../views/zwdzjs/index.vue`)
 		}
 	]
 	
