@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { LAWN, STAGE_W, MAX_PICK, allPlants, defaultPick, bulletSrc, boomSrc, zombieTypes } from './config'
+import { LAWN, STAGE_W, MAX_PICK, START_SUN, ENABLE_CD, allPlants, defaultPick, bulletSrc, boomSrc, zombieTypes } from './config'
 
 let uid = 0
 export function nextUid() {
@@ -10,7 +10,7 @@ export function randomInt(n) {
 }
 
 // ---------------- 全局状态 ----------------
-export let sun = ref(50)
+export let sun = ref(START_SUN)
 export let planted = ref([])
 export let zombies = ref([])
 export let bullets = ref([])
@@ -364,7 +364,7 @@ function loop(t) {
 }
 
 function resetState() {
-	sun.value = 50
+	sun.value = START_SUN
 	planted.value = []
 	zombies.value = []
 	bullets.value = []
@@ -381,7 +381,7 @@ function resetState() {
 export function startGame() {
 	cards.value = picked.value.map(name => {
 		let plant = allPlants.find(item => item.name === name)
-		return { ...plant, cd: 0, cdMax: plant.cd }
+		return { ...plant, cd: 0, cdMax: ENABLE_CD ? plant.cd : 0 }
 	})
 	resetState()
 	started.value = true

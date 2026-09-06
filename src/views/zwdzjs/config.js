@@ -15,6 +15,12 @@ export const LAWN = {
 /** 卡槽数量：开局最多选这么多个植物上场 */
 export const MAX_PICK = 9
 
+/** 开局阳光（调试/爽玩用，改这里即可） */
+export const START_SUN = 1000000
+
+/** 卡片是否需要冷却时间，false = 可以一直种 */
+export const ENABLE_CD = false
+
 /**
  * 全部可选植物（开局从中挑 9 个）
  * hp 血量（僵尸啃食 dps=100）   cd 卡槽冷却(秒)   cost 阳光消耗
