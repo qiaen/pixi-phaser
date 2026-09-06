@@ -170,7 +170,8 @@ watch(started, val => {
 	align-items: stretch;
 	.sun-counter {
 		flex: none;
-		width: 130px;
+		min-width: 130px;
+		padding: 0 12px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
