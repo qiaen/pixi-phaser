@@ -33,24 +33,24 @@ export let allPlants = [
 		cost: 50, cd: 7.5, hp: 300, produce: 24, sunValue: 25
 	},
 	{
-		name: 'Peashooter', cname: '豌豆射手', desc: '单线射击，每发 20 伤害',
+		name: 'Peashooter', cname: '豌豆射手', desc: '单线射击，一次连发 3 发',
 		card: '/images/Card/Plants/Peashooter.png', gif: '/images/Plants/Peashooter/0.gif',
-		cost: 100, cd: 7.5, hp: 300, interval: 1.4, attack: 20
+		cost: 100, cd: 7.5, hp: 300, interval: 1.4, attack: 20, shots: 3
 	},
 	{
-		name: 'SnowPea', cname: '寒冰射手', desc: '冰豌豆命中后减速',
+		name: 'SnowPea', cname: '寒冰射手', desc: '冰豌豆减速，一次连发 3 发',
 		card: '/images/Card/Plants/SnowPea.png', gif: '/images/Plants/SnowPea/0.gif',
-		cost: 175, cd: 7.5, hp: 300, interval: 1.4, attack: 20, slow: true
+		cost: 175, cd: 7.5, hp: 300, interval: 1.4, attack: 20, slow: true, shots: 3
 	},
 	{
-		name: 'Repeater', cname: '双发射手', desc: '一次连发两颗豌豆',
+		name: 'Repeater', cname: '双发射手', desc: '火力更猛，一次连发 3 发',
 		card: '/images/Card/Plants/Repeater.png', gif: '/images/Plants/Repeater/0.gif',
-		cost: 200, cd: 7.5, hp: 300, interval: 1.4, attack: 20, shots: 2
+		cost: 200, cd: 7.5, hp: 300, interval: 1.4, attack: 20, shots: 3
 	},
 	{
-		name: 'Threepeater', cname: '三线射手', desc: '同时攻击相邻三行',
+		name: 'Threepeater', cname: '三线射手', desc: '同时打三行，每行连发 3 发',
 		card: '/images/Card/Plants/Threepeater.png', gif: '/images/Plants/Threepeater/0.gif',
-		cost: 300, cd: 7.5, hp: 300, interval: 1.5, attack: 20, three: true
+		cost: 300, cd: 7.5, hp: 300, interval: 1.5, attack: 20, three: true, shots: 3
 	},
 	{
 		name: 'WallNut', cname: '坚果墙', desc: '4000 血肉盾',
@@ -126,20 +126,55 @@ export let boomSrc = {
 	squash: '/images/Plants/Squash/SquashAttack.gif'
 }
 
-/** 僵尸类型 */
+/** 僵尸类型：from = 开局多少秒后才会出现 */
 export let zombieTypes = [
 	{
-		name: 'Zombie', cname: '普通僵尸',
+		name: 'Zombie', cname: '普通僵尸', from: 0,
 		src: '/images/Zombies/Zombie/0.gif',
 		attackSrc: '/images/Zombies/Zombie/ZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
-		hp: 200, speed: 14
+		hp: 300, speed: 14
 	},
 	{
-		name: 'ConeheadZombie', cname: '路障僵尸',
+		name: 'ConeheadZombie', cname: '路障僵尸', from: 25,
 		src: '/images/Zombies/ConeheadZombie/0.gif',
 		attackSrc: '/images/Zombies/ConeheadZombie/ConeheadZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
-		hp: 560, speed: 14
+		hp: 800, speed: 14
+	},
+	{
+		name: 'FlagZombie', cname: '旗帜僵尸', from: 55,
+		src: '/images/Zombies/FlagZombie/0.gif',
+		attackSrc: '/images/Zombies/FlagZombie/FlagZombieAttack.gif',
+		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
+		hp: 300, speed: 24
+	},
+	{
+		name: 'PoleVaultingZombie', cname: '撑杆僵尸', from: 90,
+		src: '/images/Zombies/PoleVaultingZombie/0.gif',
+		attackSrc: '/images/Zombies/PoleVaultingZombie/PoleVaultingZombieAttack.gif',
+		dieSrc: '/images/Zombies/PoleVaultingZombie/PoleVaultingZombieDie.gif',
+		hp: 700, speed: 22
+	},
+	{
+		name: 'ScreenDoorZombie', cname: '铁栅门僵尸', from: 90,
+		src: '/images/Zombies/ScreenDoorZombie/0.gif',
+		attackSrc: '/images/Zombies/ScreenDoorZombie/ScreenDoorZombieAttack.gif',
+		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
+		hp: 900, speed: 14
+	},
+	{
+		name: 'BucketheadZombie', cname: '铁桶僵尸', from: 130,
+		src: '/images/Zombies/BucketheadZombie/0.gif',
+		attackSrc: '/images/Zombies/BucketheadZombie/BucketheadZombieAttack.gif',
+		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
+		hp: 1800, speed: 14
+	},
+	{
+		name: 'FootballZombie', cname: '橄榄球僵尸', from: 180,
+		src: '/images/Zombies/FootballZombie/0.gif',
+		attackSrc: '/images/Zombies/FootballZombie/Attack.gif',
+		dieSrc: '/images/Zombies/FootballZombie/Die.gif',
+		hp: 2800, speed: 30
 	}
 ]

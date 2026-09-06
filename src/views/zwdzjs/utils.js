@@ -19,6 +19,8 @@ export let booms = ref([])
 export let gameOver = ref(false)
 /** 是否已选完植物开始游戏 */
 export let started = ref(false)
+/** 自动收集阳光开关 */
+export let autoSun = ref(false)
 /** 玩家选中的植物（按顺序即卡槽顺序） */
 export let picked = ref([...defaultPick])
 /** 卡槽（带冷却状态），开局时根据 picked 生成 */
@@ -69,6 +71,13 @@ export function tryPlant(card, row, col) {
 function removePlant(p) {
 	planted.value = planted.value.filter(item => item !== p)
 }
+/** 铲掉某个格子上的植物 */
+export function shovelPlant(row, col) {
+	let p = plantAt(row, col)
+	if (!p) return false
+	removePlant(p)
+	return true
+}
 
 // ---------------- 僵尸 ----------------
 function hurtZombie(z, dmg) {
@@ -80,8 +89,9 @@ function hurtZombie(z, dmg) {
 	}
 }
 function spawnZombie() {
-	// 40 秒后开始混入路障僵尸
-	let type = gameTime > 40 && Math.random() < 0.35 ? zombieTypes[1] : zombieTypes[0]
+	// 只从"已解锁"的僵尸里随机，越往后高阶僵尸越多
+	let pool = zombieTypes.filter(item => gameTime >= item.from)
+	let type = pool[randomInt(pool.length)]
 	let row = randomInt(LAWN.rows)
 	zombies.value.push({
 		uid: nextUid(),
@@ -138,6 +148,10 @@ function tickSuns(dt) {
 	for (let s of [...suns.value]) {
 		if (s.y < s.targetY) {
 			s.y = Math.min(s.targetY, s.y + 45 * dt)
+		} else if (autoSun.value) {
+			// 落地后自动收集
+			collectSun(s)
+			continue
 		}
 		s.life -= dt
 		if (s.life <= 0) suns.value = suns.value.filter(item => item !== s)
@@ -182,11 +196,15 @@ function tickPlants(dt) {
 				p.timer += dt
 				if (p.timer >= p.interval) {
 					p.timer = 0
-					for (let r of rows) fireBullet(p, p.slow ? 'snow' : 'pea', r)
-					if (p.shots === 2) {
-						setTimeout(() => {
-							if (planted.value.includes(p)) fireBullet(p, 'pea')
-						}, 150)
+					// 一轮连发，每发间隔 150ms
+					let shots = p.shots || 1
+					for (let i = 0; i < shots; i++) {
+						let volley = () => {
+							if (!planted.value.includes(p)) return
+							for (let r of rows) fireBullet(p, p.slow ? 'snow' : 'pea', r)
+						}
+						if (i === 0) volley()
+						else setTimeout(volley, i * 150)
 					}
 				}
 				break

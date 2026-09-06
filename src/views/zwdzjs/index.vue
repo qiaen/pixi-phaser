@@ -2,25 +2,33 @@
 	<div class="zwdzjs">
 		<pickPlants v-if="!started" />
 		<div class="top-bar" v-if="started">
-			<div class="sun-counter">
-				<img src="/images/interface/Sun.gif" alt="" />
-				<span>{{ sun }}</span>
+			<div class="sun-box">
+				<div class="sun-counter">
+					<img src="/images/interface/Sun.gif" alt="" />
+					<span>{{ sun }}</span>
+				</div>
+				<div class="auto-sun" :class="{ on: autoSun }" @click="autoSun = !autoSun">
+					<span>自动收集 {{ autoSun ? '开' : '关' }}</span>
+				</div>
 			</div>
 			<cardBar :cards="cards" :sun="sun" :selected="dragging && dragging.name" @drag="onDrag" @dragend="onDragEnd" />
+			<div class="shovel" :class="{ on: shoveling }" title="铲除植物" @click="toggleShovel">
+				<img src="/images/interface/Shovel/0.gif" alt="铲子" />
+			</div>
 		</div>
 		<div class="stage-wrap" v-if="started" ref="refStageWrap">
-			<div class="stage" :style="stageStyle">
+			<div class="stage" :class="{ shoveling }" :style="stageStyle">
 				<div
 					class="cell"
 					v-for="cell in cells"
 					:key="cell.key"
 					:style="cellStyle(cell)"
-					:class="{ hover: hoverKey === cell.key && dragging, taken: isTaken(cell) }"
+					:class="{ hover: canDrop(cell), dig: shoveling && isTaken(cell), taken: isTaken(cell) }"
 					@dragover.prevent
 					@dragenter.prevent="hoverKey = cell.key"
 					@dragleave="onLeave(cell)"
 					@drop.prevent="onDrop(cell)"
-					@click="onDrop(cell)"
+					@click="onCellClick(cell)"
 				>
 					<img v-if="canDrop(cell)" class="ghost" :src="dragging.gif" alt="" />
 				</div>
@@ -64,12 +72,18 @@ import zombieView from './components/zombie.vue'
 import sunView from './components/sun.vue'
 import pickPlants from './components/pickPlants.vue'
 import { STAGE_W, STAGE_H, LAWN } from './config'
-import { sun, cards, planted, zombies, bullets, suns, booms, gameOver, started, plantAt, tryPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
+import { sun, cards, planted, zombies, bullets, suns, booms, gameOver, started, autoSun, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
 
 let refStageWrap = ref()
 let scale = ref(1)
 let dragging = ref(null)
 let hoverKey = ref('')
+let shoveling = ref(false)
+
+function toggleShovel() {
+	shoveling.value = !shoveling.value
+	if (shoveling.value) onDragEnd()
+}
 
 let cells = computed(() => {
 	let list = []
@@ -116,7 +130,16 @@ function isTaken(cell) {
 	return !!plantAt(cell.row, cell.col)
 }
 function canDrop(cell) {
-	return dragging.value && hoverKey.value === cell.key && !isTaken(cell) && sun.value >= dragging.value.cost
+	return !!dragging.value && !shoveling.value && hoverKey.value === cell.key && !isTaken(cell) && sun.value >= dragging.value.cost
+}
+/** 格子点击：铲子模式下铲除，否则种下已选植物 */
+function onCellClick(cell) {
+	if (shoveling.value) {
+		shovelPlant(cell.row, cell.col)
+		shoveling.value = false
+		return
+	}
+	onDrop(cell)
 }
 
 function onDrag(card) {
@@ -168,16 +191,21 @@ watch(started, val => {
 	flex: none;
 	display: flex;
 	align-items: stretch;
-	.sun-counter {
+	.sun-box {
 		flex: none;
-		min-width: 130px;
-		padding: 0 12px;
+		width: 160px;
+		display: flex;
+		flex-direction: column;
+		background: #4a2c10;
+		border-right: 4px solid #3a2008;
+	}
+	.sun-counter {
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
-		background: #4a2c10;
-		border-right: 4px solid #3a2008;
+		padding: 0 12px;
 		color: #ffe08a;
 		font-size: 20px;
 		font-weight: bold;
@@ -185,6 +213,50 @@ watch(started, val => {
 		img {
 			width: 32px;
 			height: 32px;
+		}
+	}
+	.auto-sun {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 14px;
+		font-weight: bold;
+		color: #b9a88a;
+		background: #3a2008;
+		border-top: 2px solid #2a1a08;
+		cursor: pointer;
+		user-select: none;
+		&:hover {
+			color: #e6d3a3;
+			background: #5f3814;
+		}
+		&.on {
+			color: #ffe08a;
+			background: #6b4a12;
+		}
+	}
+	.shovel {
+		flex: none;
+		width: 92px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #4a2c10;
+		border-left: 4px solid #3a2008;
+		cursor: pointer;
+		user-select: none;
+		img {
+			width: 64px;
+			height: 40px;
+			object-fit: contain;
+		}
+		&:hover {
+			background: #5f3814;
+		}
+		&.on {
+			background: #8a5326;
+			box-shadow: inset 0 0 0 3px #ffd76a;
 		}
 	}
 }
