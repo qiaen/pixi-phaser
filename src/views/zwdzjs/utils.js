@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { LAWN, STAGE_W, plantCards, bulletSrc, boomSrc, zombieTypes } from './config'
+import { LAWN, STAGE_W, MAX_PICK, allPlants, defaultPick, bulletSrc, boomSrc, zombieTypes } from './config'
 
 let uid = 0
 export function nextUid() {
@@ -17,8 +17,21 @@ export let bullets = ref([])
 export let suns = ref([])
 export let booms = ref([])
 export let gameOver = ref(false)
-/** 卡槽（带冷却状态） */
-export let cards = ref(plantCards.map(card => ({ ...card, cd: 0, cdMax: card.cd })))
+/** 是否已选完植物开始游戏 */
+export let started = ref(false)
+/** 玩家选中的植物（按顺序即卡槽顺序） */
+export let picked = ref([...defaultPick])
+/** 卡槽（带冷却状态），开局时根据 picked 生成 */
+export let cards = ref([])
+
+export function togglePlant(name) {
+	let index = picked.value.indexOf(name)
+	if (index >= 0) {
+		picked.value.splice(index, 1)
+	} else if (picked.value.length < MAX_PICK) {
+		picked.value.push(name)
+	}
+}
 
 // ---------------- 坐标工具 ----------------
 export function cellCenter(col) {
@@ -79,6 +92,7 @@ function spawnZombie() {
 		y: cellBottom(row),
 		eating: null,
 		slowTimer: 0,
+		freezeTimer: 0,
 		deadTimer: 0,
 		dead: false
 	})
@@ -93,9 +107,9 @@ export function collectSun(s) {
 	suns.value = suns.value.filter(item => item !== s)
 }
 
-// ---------------- 爆炸 ----------------
-function explode(x, y, row, colRadius, rowRadius, damage, src) {
-	booms.value.push({ uid: nextUid(), x, y, src, life: 0.9 })
+// ---------------- 爆炸 / 范围伤害 ----------------
+function explode(x, y, row, colRadius, rowRadius, damage, src, w = 170) {
+	booms.value.push({ uid: nextUid(), x, y, src, w, life: 0.9 })
 	let col = Math.round((x - LAWN.left - LAWN.cellW / 2) / LAWN.cellW)
 	for (let z of [...zombies.value]) {
 		if (z.dead) continue
@@ -130,17 +144,22 @@ function tickSuns(dt) {
 	}
 }
 
-function fireBullet(plant, type) {
+function fireBullet(plant, type, row = plant.row) {
 	bullets.value.push({
 		uid: nextUid(),
-		row: plant.row,
+		row,
 		x: plant.x + 20,
-		y: plant.y - 55,
+		y: cellBottom(row) - 55,
 		speed: 330,
 		attack: plant.attack,
 		type,
 		src: bulletSrc[type]
 	})
+}
+
+/** 这一行（或这些行）右侧有没有僵尸 */
+function hasZombieAt(rows, x) {
+	return zombies.value.some(z => !z.dead && rows.includes(z.row) && z.x > x - 20 && z.x < STAGE_W + 60)
 }
 
 function tickPlants(dt) {
@@ -156,13 +175,14 @@ function tickPlants(dt) {
 			}
 			case 'Peashooter':
 			case 'SnowPea':
-			case 'Repeater': {
-				let hasTarget = zombies.value.some(z => !z.dead && z.row === p.row && z.x > p.x - 20 && z.x < STAGE_W + 60)
-				if (!hasTarget) break
+			case 'Repeater':
+			case 'Threepeater': {
+				let rows = p.three ? [p.row - 1, p.row, p.row + 1].filter(r => r >= 0 && r < LAWN.rows) : [p.row]
+				if (!hasZombieAt(rows, p.x)) break
 				p.timer += dt
 				if (p.timer >= p.interval) {
 					p.timer = 0
-					fireBullet(p, p.slow ? 'snow' : 'pea')
+					for (let r of rows) fireBullet(p, p.slow ? 'snow' : 'pea', r)
 					if (p.shots === 2) {
 						setTimeout(() => {
 							if (planted.value.includes(p)) fireBullet(p, 'pea')
@@ -171,14 +191,15 @@ function tickPlants(dt) {
 				}
 				break
 			}
-			case 'PotatoMine': {
+			case 'PotatoMine':
+			case 'Squash': {
 				if (p.state !== 'armed') {
 					p.timer += dt
 					if (p.timer >= p.armTime) p.state = 'armed'
 				} else {
-					let z = zombies.value.find(z => !z.dead && z.row === p.row && Math.abs(z.x - p.x) < 45)
+					let z = zombies.value.find(z => !z.dead && z.row === p.row && Math.abs(z.x - p.x) < 50)
 					if (z) {
-						explode(p.x, p.y, p.row, 0, 0, p.attack, boomSrc.mine)
+						explode(p.x, p.y, p.row, 0, 0, p.attack, p.name === 'Squash' ? boomSrc.squash : boomSrc.mine, 220)
 						removePlant(p)
 					}
 				}
@@ -188,6 +209,35 @@ function tickPlants(dt) {
 				p.timer += dt
 				if (p.timer >= p.boomDelay) {
 					explode(p.x, p.y, p.row, 1, 1, p.attack, boomSrc.cherry)
+					removePlant(p)
+				}
+				break
+			}
+			case 'Jalapeno': {
+				p.timer += dt
+				if (p.timer >= p.boomDelay) {
+					// 整行灼烧
+					explode(LAWN.left + (LAWN.cols * LAWN.cellW) / 2, p.y, p.row, LAWN.cols, 0, p.attack, boomSrc.jalapeno, 1000)
+					removePlant(p)
+				}
+				break
+			}
+			case 'IceShroom': {
+				p.timer += dt
+				if (p.timer >= p.boomDelay) {
+					booms.value.push({
+						uid: nextUid(),
+						x: LAWN.left + (LAWN.cols * LAWN.cellW) / 2,
+						y: LAWN.top + (LAWN.rows * LAWN.cellH) / 2,
+						src: boomSrc.ice,
+						w: 1300,
+						life: 1.2
+					})
+					for (let z of zombies.value) {
+						if (z.dead) continue
+						hurtZombie(z, p.attack)
+						z.freezeTimer = p.freeze
+					}
 					removePlant(p)
 				}
 				break
@@ -206,6 +256,13 @@ function tickPlants(dt) {
 						p.state = 'chew'
 						p.timer = 0
 					}
+				}
+				break
+			}
+			case 'Spikeweed': {
+				for (let z of zombies.value) {
+					if (z.dead || z.row !== p.row) continue
+					if (Math.abs(z.x - p.x) < 45) hurtZombie(z, p.spikeDps * dt)
 				}
 				break
 			}
@@ -244,6 +301,11 @@ function tickZombies(dt) {
 		if (z.dead) {
 			z.deadTimer += dt
 			if (z.deadTimer > 1.8) zombies.value = zombies.value.filter(item => item !== z)
+			continue
+		}
+		if (z.freezeTimer > 0) {
+			// 被寒冰菇冻住：不动也不吃
+			z.freezeTimer -= dt
 			continue
 		}
 		if (z.slowTimer > 0) z.slowTimer -= dt
@@ -301,13 +363,7 @@ function loop(t) {
 	rafId = requestAnimationFrame(loop)
 }
 
-export function startGame() {
-	rafId = requestAnimationFrame(loop)
-}
-export function stopGame() {
-	cancelAnimationFrame(rafId)
-}
-export function resetGame() {
+function resetState() {
 	sun.value = 50
 	planted.value = []
 	zombies.value = []
@@ -319,4 +375,32 @@ export function resetGame() {
 	gameTime = 0
 	skySunTimer = 4
 	spawnTimer = 8
+}
+
+/** 选完植物后开始游戏 */
+export function startGame() {
+	cards.value = picked.value.map(name => {
+		let plant = allPlants.find(item => item.name === name)
+		return { ...plant, cd: 0, cdMax: plant.cd }
+	})
+	resetState()
+	started.value = true
+	lastTime = 0
+	rafId = requestAnimationFrame(loop)
+}
+
+/** 重新开始当前这局（沿用已选植物） */
+export function resetGame() {
+	resetState()
+}
+
+/** 回到选植物界面 */
+export function backToPick() {
+	cancelAnimationFrame(rafId)
+	resetState()
+	started.value = false
+}
+
+export function stopGame() {
+	cancelAnimationFrame(rafId)
 }

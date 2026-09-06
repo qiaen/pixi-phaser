@@ -95,6 +95,7 @@ src/
   - `components/cardBar.vue`：顶部卡槽模块，9 个槽位，卡片可 HTML5 拖拽。
   - `index.vue`：固定舞台按窗口等比缩放居中（`transform: scale()`），草坪格子接收 drop/click 完成种植，拖拽时显示半透明预览。所有实体坐标均基于舞台坐标系，与缩放解耦。
   - `utils.js`：全局响应式状态（sun / planted / zombies / bullets / suns / booms / gameOver / cards）+ `requestAnimationFrame` 主循环，含种植扣阳光与冷却、阳光产出与收集、射手开火、子弹飞行与命中、火炬树桩强化、僵尸刷新/行走/啃食/死亡、爆炸判定。
+  - `components/pickPlants.vue`：开局选卡界面，从 `allPlants`（15 种）里最多选 9 个（`MAX_PICK`），选中的顺序即卡槽顺序；支持默认阵容 / 清空 / 开始游戏。
   - `components/plant.vue` `zombie.vue` `sun.vue`：三种实体，各自带血条与状态贴图。
-  - 植物特性：向日葵产阳光、豌豆/寒冰（减速）/双发射手射击、坚果墙 4000 血、土豆雷埋设 14s 后炸单格、樱桃炸弹 1.2s 后炸 3x3、大嘴花吞噬后咀嚼、火炬树桩把穿过的豌豆变火豆（伤害翻倍）。
+  - 植物特性：向日葵产阳光、豌豆/寒冰（减速）/双发射手射击、三线射手打相邻三行、坚果墙 4000 血、高坚果 8000 血、土豆雷埋设 14s 后炸单格、窝瓜压扁踩中者、樱桃炸弹 1.2s 后炸 3x3、火爆辣椒烧整行、寒冰菇全场冻结（僵尸停止行动）、大嘴花吞噬后咀嚼 20s、火炬树桩把穿过的豌豆变火豆（伤害翻倍）、地刺持续伤害踩过的僵尸。
 - 注意：`src/views/zw/index.vue` 引用了不存在的 `./images/interface/ZombiesWon.png`，会导致 `npm run build` 失败（dev 不受影响）。

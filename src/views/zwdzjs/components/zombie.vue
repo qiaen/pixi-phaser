@@ -1,7 +1,7 @@
 <template>
 	<div
 		class="zw-zombie"
-		:class="{ slowed: zombie.slowTimer > 0 }"
+		:class="{ slowed: zombie.slowTimer > 0, frozen: zombie.freezeTimer > 0 }"
 		:style="{ left: zombie.x + 'px', top: zombie.y + 'px', zIndex: 100 + zombie.row * 10 + 5 }"
 	>
 		<img class="body" :src="gif" alt="" />
@@ -29,6 +29,9 @@ let gif = computed(() => {
 	pointer-events: none;
 	&.slowed .body {
 		filter: hue-rotate(160deg) brightness(1.15);
+	}
+	&.frozen .body {
+		filter: hue-rotate(160deg) brightness(1.3) saturate(2);
 	}
 	.body {
 		display: block;

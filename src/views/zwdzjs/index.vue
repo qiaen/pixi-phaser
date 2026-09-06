@@ -1,13 +1,14 @@
 <template>
 	<div class="zwdzjs">
-		<div class="top-bar">
+		<pickPlants v-if="!started" />
+		<div class="top-bar" v-if="started">
 			<div class="sun-counter">
 				<img src="/images/interface/Sun.gif" alt="" />
 				<span>{{ sun }}</span>
 			</div>
 			<cardBar :cards="cards" :sun="sun" :selected="dragging && dragging.name" @drag="onDrag" @dragend="onDragEnd" />
 		</div>
-		<div class="stage-wrap" ref="refStageWrap">
+		<div class="stage-wrap" v-if="started" ref="refStageWrap">
 			<div class="stage" :style="stageStyle">
 				<div
 					class="cell"
@@ -45,21 +46,25 @@
 				<sunView v-for="s in suns" :key="s.uid" :sun="s" @collect="collectSun" />
 
 				<div class="game-over" v-if="gameOver">
-					<p>僵尸吃掉了你的脑子！</p>
-					<button @click="resetGame">重新开始</button>
+					<img class="zombies-won" src="/images/interface/ZombiesWon.png" alt="Zombies Won" />
+					<div class="over-btns">
+						<button @click="resetGame">重新开始</button>
+						<button @click="backToPick">重新选植物</button>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 </template>
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import cardBar from './components/cardBar.vue'
 import plantView from './components/plant.vue'
 import zombieView from './components/zombie.vue'
 import sunView from './components/sun.vue'
+import pickPlants from './components/pickPlants.vue'
 import { STAGE_W, STAGE_H, LAWN } from './config'
-import { sun, cards, planted, zombies, bullets, suns, booms, gameOver, plantAt, tryPlant, collectSun, startGame, stopGame, resetGame } from './utils'
+import { sun, cards, planted, zombies, bullets, suns, booms, gameOver, started, plantAt, tryPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
 
 let refStageWrap = ref()
 let scale = ref(1)
@@ -102,7 +107,8 @@ function bulletStyle(b) {
 function boomStyle(bm) {
 	return {
 		left: bm.x + 'px',
-		top: bm.y + 'px'
+		top: bm.y + 'px',
+		width: (bm.w || 170) + 'px'
 	}
 }
 
@@ -135,13 +141,15 @@ function resize() {
 	scale.value = Math.min(el.clientWidth / STAGE_W, el.clientHeight / STAGE_H)
 }
 onMounted(() => {
-	resize()
 	window.addEventListener('resize', resize)
-	startGame()
 })
 onUnmounted(() => {
 	window.removeEventListener('resize', resize)
 	stopGame()
+})
+// 选完植物进入游戏后，舞台才挂载，需要重新算一次缩放
+watch(started, val => {
+	if (val) nextTick(resize)
 })
 </script>
 <style lang="scss">
@@ -228,19 +236,22 @@ onUnmounted(() => {
 	top: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 600;
-	padding: 40px 60px;
+	padding: 24px 60px 36px;
 	text-align: center;
-	background: rgba(0, 0, 0, 0.75);
+	background: rgba(0, 0, 0, 0.6);
 	border: 3px solid #8a5326;
 	border-radius: 12px;
-	p {
-		font-size: 34px;
-		font-weight: bold;
-		color: #ff5f4a;
-		text-shadow: 2px 2px 4px #000;
+	.zombies-won {
+		display: block;
+		max-width: 500px;
+	}
+	.over-btns {
+		margin-top: 24px;
+		display: flex;
+		justify-content: center;
+		gap: 16px;
 	}
 	button {
-		margin-top: 24px;
 		padding: 10px 28px;
 		font-size: 18px;
 		color: #fff;
