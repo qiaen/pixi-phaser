@@ -16,6 +16,8 @@ export let zombies = ref([])
 export let bullets = ref([])
 export let suns = ref([])
 export let booms = ref([])
+/** 每行一辆小推车 */
+export let mowers = ref([])
 export let gameOver = ref(false)
 /** 是否已选完植物开始游戏 */
 export let started = ref(false)
@@ -313,6 +315,30 @@ function tickBullets(dt) {
 	bullets.value = bullets.value.filter(item => item.x < STAGE_W + 60)
 }
 
+/** 僵尸走到小推车处就触发，小推车一路向右碾平整行 */
+const MOWER_SPEED = 700
+function tickMowers(dt) {
+	for (let m of mowers.value) {
+		if (m.used) continue
+		if (!m.running) {
+			let z = zombies.value.find(item => !item.dead && item.row === m.row && item.x <= LAWN.left + 25)
+			if (z) m.running = true
+			continue
+		}
+		m.x += MOWER_SPEED * dt
+		for (let z of zombies.value) {
+			if (z.dead || z.row !== m.row) continue
+			if (z.x > m.x - 60 && z.x < m.x + 40) hurtZombie(z, 99999)
+		}
+		if (m.x > STAGE_W + 80) m.used = true
+	}
+}
+/** 该行的小推车还在不在（不在的话僵尸冲进去就算输） */
+function mowerAlive(row) {
+	let m = mowers.value.find(item => item.row === row)
+	return !!m && !m.used
+}
+
 const EAT_DPS = 100
 function tickZombies(dt) {
 	for (let z of [...zombies.value]) {
@@ -338,7 +364,8 @@ function tickZombies(dt) {
 			z.eating = null
 			z.x -= z.speed * (z.slowTimer > 0 ? 0.5 : 1) * dt
 		}
-		if (z.x < LAWN.left - 60) gameOver.value = true
+		// 小推车还在的话，僵尸会先被推车解决，冲进房子才算输
+		if (z.x < LAWN.left - 60 && !mowerAlive(z.row)) gameOver.value = true
 	}
 }
 
@@ -375,6 +402,7 @@ function loop(t) {
 		tickSuns(dt)
 		tickPlants(dt)
 		tickBullets(dt)
+		tickMowers(dt)
 		tickZombies(dt)
 		tickSpawn(dt)
 	}
@@ -385,6 +413,14 @@ function resetState() {
 	sun.value = START_SUN
 	planted.value = []
 	zombies.value = []
+	mowers.value = Array.from({ length: LAWN.rows }, (_, row) => ({
+		uid: nextUid(),
+		row,
+		x: LAWN.left - 42,
+		y: cellBottom(row),
+		running: false,
+		used: false
+	}))
 	bullets.value = []
 	suns.value = []
 	booms.value = []

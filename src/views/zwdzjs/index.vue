@@ -1,5 +1,6 @@
 <template>
 	<div class="zwdzjs">
+		<audio ref="refBgm" src="/zw/bg.mp3" loop></audio>
 		<pickPlants v-if="!started" />
 		<div class="top-bar" v-if="started">
 			<div class="sun-box">
@@ -15,9 +16,12 @@
 			<div class="shovel" :class="{ on: shoveling }" title="铲除植物" @click="toggleShovel">
 				<img src="/images/interface/Shovel/0.gif" alt="铲子" />
 			</div>
+			<div class="music" :class="{ on: musicOn }" title="背景音乐" @click="toggleMusic">
+				{{ musicOn ? '音乐开' : '音乐关' }}
+			</div>
 		</div>
 		<div class="stage-wrap" v-if="started" ref="refStageWrap">
-			<div class="stage" :class="{ shoveling }" :style="stageStyle">
+			<div class="stage" :class="{ shoveling }" :style="stageStyle" ref="refStage" @mousemove="onStageMove" @mouseleave="shovelPos.show = false">
 				<div
 					class="cell"
 					v-for="cell in cells"
@@ -34,6 +38,7 @@
 				</div>
 
 				<plantView v-for="p in planted" :key="p.uid" :plant="p" />
+				<mowerView v-for="m in aliveMowers" :key="m.uid" :mower="m" />
 				<zombieView v-for="z in zombies" :key="z.uid" :zombie="z" />
 				<img
 					class="zw-bullet"
@@ -53,11 +58,20 @@
 				/>
 				<sunView v-for="s in suns" :key="s.uid" :sun="s" @collect="collectSun" />
 
+				<!-- 铲除模式下跟随光标的铲子 -->
+				<img
+					v-if="shoveling && shovelPos.show"
+					class="shovel-cursor"
+					src="/images/interface/Shovel/0.gif"
+					alt=""
+					:style="{ left: shovelPos.x + 'px', top: shovelPos.y + 'px' }"
+				/>
+
 				<div class="game-over" v-if="gameOver">
 					<img class="zombies-won" src="/images/interface/ZombiesWon.png" alt="Zombies Won" />
 					<div class="over-btns">
-						<button @click="resetGame">重新开始</button>
-						<button @click="backToPick">重新选植物</button>
+						<button @click="onResetGame">重新开始</button>
+						<button @click="onBackToPick">重新选植物</button>
 					</div>
 				</div>
 			</div>
@@ -70,20 +84,53 @@ import cardBar from './components/cardBar.vue'
 import plantView from './components/plant.vue'
 import zombieView from './components/zombie.vue'
 import sunView from './components/sun.vue'
+import mowerView from './components/mower.vue'
 import pickPlants from './components/pickPlants.vue'
 import { STAGE_W, STAGE_H, LAWN } from './config'
-import { sun, cards, planted, zombies, bullets, suns, booms, gameOver, started, autoSun, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
+import { sun, cards, planted, zombies, bullets, suns, booms, mowers, gameOver, started, autoSun, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
 
 let refStageWrap = ref()
+let refBgm = ref()
 let scale = ref(1)
 let dragging = ref(null)
 let hoverKey = ref('')
 let shoveling = ref(false)
+let shovelPos = ref({ x: 0, y: 0, show: false })
+let musicOn = ref(true)
+let refStage = ref()
 
 function toggleShovel() {
 	shoveling.value = !shoveling.value
+	shovelPos.value.show = false
+	// 铲除模式和种植模式互斥
 	if (shoveling.value) onDragEnd()
 }
+/** 光标在舞台内的坐标（舞台被 scale 缩放过，需要换算） */
+function onStageMove(e) {
+	if (!shoveling.value || !refStage.value) return
+	let rect = refStage.value.getBoundingClientRect()
+	shovelPos.value = {
+		x: (e.clientX - rect.left) / scale.value,
+		y: (e.clientY - rect.top) / scale.value,
+		show: true
+	}
+}
+
+/** 浏览器要求用户交互后才能播放，点"开始游戏"正好是交互 */
+function playMusic() {
+	let audio = refBgm.value
+	if (!audio || !musicOn.value) return
+	audio.volume = 0.4
+	audio.play().catch(() => {})
+}
+function toggleMusic() {
+	musicOn.value = !musicOn.value
+	if (musicOn.value) playMusic()
+	else refBgm.value && refBgm.value.pause()
+}
+
+/** 还没被用掉的小推车 */
+let aliveMowers = computed(() => mowers.value.filter(m => !m.used))
 
 let cells = computed(() => {
 	let list = []
@@ -143,6 +190,9 @@ function onCellClick(cell) {
 }
 
 function onDrag(card) {
+	// 选卡种植时自动收起铲子
+	shoveling.value = false
+	shovelPos.value.show = false
 	dragging.value = card
 }
 function onDragEnd() {
@@ -163,16 +213,44 @@ function resize() {
 	if (!el) return
 	scale.value = Math.min(el.clientWidth / STAGE_W, el.clientHeight / STAGE_H)
 }
+/** 退出铲除模式（Esc 或重开时用） */
+function cancelShovel() {
+	shoveling.value = false
+	shovelPos.value.show = false
+}
+function onResetGame() {
+	cancelShovel()
+	onDragEnd()
+	resetGame()
+}
+function onBackToPick() {
+	cancelShovel()
+	onDragEnd()
+	backToPick()
+}
+function onKeydown(e) {
+	if (e.key === 'Escape') cancelShovel()
+}
 onMounted(() => {
 	window.addEventListener('resize', resize)
+	window.addEventListener('keydown', onKeydown)
 })
 onUnmounted(() => {
 	window.removeEventListener('resize', resize)
+	window.removeEventListener('keydown', onKeydown)
 	stopGame()
+	refBgm.value && refBgm.value.pause()
 })
-// 选完植物进入游戏后，舞台才挂载，需要重新算一次缩放
+// 选完植物进入游戏后，舞台才挂载，需要重新算一次缩放；同时开始播放背景音乐
 watch(started, val => {
-	if (val) nextTick(resize)
+	if (val) {
+		nextTick(() => {
+			resize()
+			playMusic()
+		})
+	} else {
+		refBgm.value && refBgm.value.pause()
+	}
 })
 </script>
 <style lang="scss">
@@ -259,6 +337,28 @@ watch(started, val => {
 			box-shadow: inset 0 0 0 3px #ffd76a;
 		}
 	}
+	.music {
+		flex: none;
+		width: 84px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 14px;
+		font-weight: bold;
+		color: #b9a88a;
+		background: #3a2008;
+		border-left: 2px solid #2a1a08;
+		cursor: pointer;
+		user-select: none;
+		&:hover {
+			color: #e6d3a3;
+			background: #5f3814;
+		}
+		&.on {
+			color: #ffe08a;
+			background: #6b4a12;
+		}
+	}
 }
 .stage-wrap {
 	flex: 1;
@@ -272,6 +372,9 @@ watch(started, val => {
 	transform-origin: center center;
 	background: #000 url(/images/interface/background1.jpg) no-repeat;
 	background-size: 100% 100%;
+	&.shoveling {
+		cursor: none;
+	}
 }
 .cell {
 	position: absolute;
@@ -279,6 +382,20 @@ watch(started, val => {
 		background: rgba(255, 255, 255, 0.22);
 		box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 	}
+	&.dig {
+		background: rgba(255, 80, 60, 0.25);
+		box-shadow: inset 0 0 0 2px rgba(255, 120, 90, 0.85);
+	}
+}
+.shovel-cursor {
+	position: absolute;
+	width: 76px;
+	height: 34px;
+	object-fit: contain;
+	transform: translate(-14px, -6px);
+	pointer-events: none;
+	z-index: 700;
+	filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
 }
 .ghost {
 	position: absolute;

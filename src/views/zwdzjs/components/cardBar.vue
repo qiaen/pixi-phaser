@@ -59,9 +59,11 @@ function quickPlant(card) {
 	gap: 10px;
 	padding: 0 20px;
 	user-select: none;
+	overflow-x: auto;
 	background: linear-gradient(#8a5326, #5b3416);
 	border-bottom: 4px solid #3a2008;
 	.slot {
+		flex: none;
 		width: 86px;
 		height: 108px;
 		position: relative;
