@@ -7,7 +7,8 @@
 			<div class="head-center">
 				<h1>选择你的植物</h1>
 				<p class="tip">
-					最多选 {{ MAX_PICK }} 个上场，已选
+					共 {{ levels.length }} 关，难度递增，最终关将面对僵王 BOSS　|　最多选
+					{{ MAX_PICK }} 个植物上场，已选
 					<b :class="{ full: picked.length >= MAX_PICK }">{{ picked.length }}</b>
 					/ {{ MAX_PICK }}
 				</p>
@@ -44,7 +45,7 @@
 	</div>
 </template>
 <script setup>
-import { MAX_PICK, allPlants, defaultPick } from '../config'
+import { MAX_PICK, allPlants, defaultPick, levels } from '../config'
 import { picked, togglePlant, startGame } from '../utils'
 
 function isPicked(name) {

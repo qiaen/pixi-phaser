@@ -21,6 +21,11 @@ export const START_SUN = 1000000
 /** 卡片是否需要冷却时间，false = 可以一直种 */
 export const ENABLE_CD = false
 
+/** 家门口（左侧这几列）算安全区 */
+export const SAFE_COLS = 2
+/** 种在安全区之外的植物，有多大概率当场变异成僵尸 */
+export const TURN_ZOMBIE_RATE = 0.4
+
 /**
  * 全部可选植物（开局从中挑 9 个）
  * hp 血量（僵尸啃食 dps=100）   cd 卡槽冷却(秒)   cost 阳光消耗
@@ -126,7 +131,54 @@ export let boomSrc = {
 	squash: '/images/Plants/Squash/SquashAttack.gif'
 }
 
-/** 僵尸类型：from = 开局多少秒后才会出现 */
+/**
+ * 关卡配置（难度递增）
+ * duration    本关要坚守的秒数（有 boss 的关卡改为"击杀 boss"通关）
+ * spawn       僵尸刷新间隔，从 from 秒递减到 to 秒（越到后面越密）
+ * types       本关会出现的僵尸
+ * bigWave     进度到多少时来一波（0~1），bigWaveCount 为这一波的数量
+ * boss        有 boss 的关卡：at 秒后登场
+ */
+export let levels = [
+	{
+		name: '初次入侵', duration: 60,
+		spawn: { from: 13, to: 6 },
+		types: ['Zombie', 'ConeheadZombie'],
+		bigWave: 0.78, bigWaveCount: 3
+	},
+	{
+		name: '尸潮来袭', duration: 90,
+		spawn: { from: 10, to: 4.5 },
+		types: ['Zombie', 'ConeheadZombie', 'FlagZombie', 'PoleVaultingZombie'],
+		bigWave: 0.72, bigWaveCount: 5
+	},
+	{
+		name: '铁甲围攻', duration: 110,
+		spawn: { from: 8, to: 3.5 },
+		types: ['ConeheadZombie', 'FlagZombie', 'ScreenDoorZombie', 'PoleVaultingZombie', 'BucketheadZombie'],
+		bigWave: 0.7, bigWaveCount: 6
+	},
+	{
+		name: '僵王降临', duration: 9999,
+		spawn: { from: 9, to: 5 },
+		types: ['ConeheadZombie', 'FlagZombie', 'ScreenDoorZombie', 'BucketheadZombie'],
+		bigWave: 0.9, bigWaveCount: 0,
+		boss: { at: 12, hp: 6000, speed: 8 }
+	}
+]
+
+/** 僵王 BOSS：血量极厚、移动很慢，会不断放出小僵尸 */
+export let boss = {
+	name: 'LGBOSS', cname: '僵王博士',
+	src: '/images/Zombies/LGBOSS/0.gif',
+	attackSrc: '/images/Zombies/LGBOSS/5.gif',
+	dieSrc: '/images/Zombies/LGBOSS/BoomDie.gif',
+	spawnSrc: '/images/Zombies/LGBOSS/1.gif',
+	w: 320,
+	row: 2
+}
+
+/** 僵尸类型 */
 export let zombieTypes = [
 	{
 		name: 'Zombie', cname: '普通僵尸', from: 0,
@@ -136,42 +188,42 @@ export let zombieTypes = [
 		hp: 300, speed: 14
 	},
 	{
-		name: 'ConeheadZombie', cname: '路障僵尸', from: 25,
+		name: 'ConeheadZombie', cname: '路障僵尸',
 		src: '/images/Zombies/ConeheadZombie/0.gif',
 		attackSrc: '/images/Zombies/ConeheadZombie/ConeheadZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
 		hp: 800, speed: 14
 	},
 	{
-		name: 'FlagZombie', cname: '旗帜僵尸', from: 55,
+		name: 'FlagZombie', cname: '旗帜僵尸',
 		src: '/images/Zombies/FlagZombie/0.gif',
 		attackSrc: '/images/Zombies/FlagZombie/FlagZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
 		hp: 300, speed: 24
 	},
 	{
-		name: 'PoleVaultingZombie', cname: '撑杆僵尸', from: 90,
+		name: 'PoleVaultingZombie', cname: '撑杆僵尸',
 		src: '/images/Zombies/PoleVaultingZombie/0.gif',
 		attackSrc: '/images/Zombies/PoleVaultingZombie/PoleVaultingZombieAttack.gif',
 		dieSrc: '/images/Zombies/PoleVaultingZombie/PoleVaultingZombieDie.gif',
 		hp: 700, speed: 22
 	},
 	{
-		name: 'ScreenDoorZombie', cname: '铁栅门僵尸', from: 90,
+		name: 'ScreenDoorZombie', cname: '铁栅门僵尸',
 		src: '/images/Zombies/ScreenDoorZombie/0.gif',
 		attackSrc: '/images/Zombies/ScreenDoorZombie/ScreenDoorZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
 		hp: 900, speed: 14
 	},
 	{
-		name: 'BucketheadZombie', cname: '铁桶僵尸', from: 130,
+		name: 'BucketheadZombie', cname: '铁桶僵尸',
 		src: '/images/Zombies/BucketheadZombie/0.gif',
 		attackSrc: '/images/Zombies/BucketheadZombie/BucketheadZombieAttack.gif',
 		dieSrc: '/images/Zombies/Zombie/ZombieDie.gif',
 		hp: 1800, speed: 14
 	},
 	{
-		name: 'FootballZombie', cname: '橄榄球僵尸', from: 180,
+		name: 'FootballZombie', cname: '橄榄球僵尸',
 		src: '/images/Zombies/FootballZombie/0.gif',
 		attackSrc: '/images/Zombies/FootballZombie/Attack.gif',
 		dieSrc: '/images/Zombies/FootballZombie/Die.gif',

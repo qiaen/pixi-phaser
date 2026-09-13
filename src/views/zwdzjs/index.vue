@@ -67,11 +67,30 @@
 					:style="{ left: shovelPos.x + 'px', top: shovelPos.y + 'px' }"
 				/>
 
+				<!-- 大波/BOSS 提示 -->
+				<img v-if="waveBanner === 'large'" class="wave-banner" src="/images/interface/LargeWave.gif" alt="一大波僵尸正在接近" />
+				<img v-if="waveBanner === 'final'" class="wave-banner final" src="/images/interface/FinalWave.gif" alt="最后一波" />
+
+				<!-- 关卡进度条 -->
+				<progressMeter :progress="progress" :level-index="levelIndex" :total="levels.length" :level-name="currentLevel.name" />
+
+				<!-- 失败 -->
 				<div class="game-over" v-if="gameOver">
 					<img class="zombies-won" src="/images/interface/ZombiesWon.png" alt="Zombies Won" />
 					<div class="over-btns">
-						<button @click="onResetGame">重新开始</button>
+						<button @click="onResetGame">重打本关</button>
 						<button @click="onBackToPick">重新选植物</button>
+					</div>
+				</div>
+
+				<!-- 过关 / 通关 -->
+				<div class="game-over win" v-if="levelClear">
+					<img class="trophy" v-if="allClear" src="/images/interface/trophy.png" alt="通关" />
+					<h2>{{ allClear ? '恭喜！全部关卡通关' : `第 ${levelIndex + 1} 关通过` }}</h2>
+					<div class="over-btns">
+						<button v-if="!allClear" class="primary" @click="nextLevel">进入下一关</button>
+						<button v-if="!allClear" @click="onResetGame">重打本关</button>
+						<button v-if="allClear" @click="onBackToPick">再玩一次</button>
 					</div>
 				</div>
 			</div>
@@ -85,9 +104,10 @@ import plantView from './components/plant.vue'
 import zombieView from './components/zombie.vue'
 import sunView from './components/sun.vue'
 import mowerView from './components/mower.vue'
+import progressMeter from './components/progressMeter.vue'
 import pickPlants from './components/pickPlants.vue'
-import { STAGE_W, STAGE_H, LAWN } from './config'
-import { sun, cards, planted, zombies, bullets, suns, booms, mowers, gameOver, started, autoSun, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, backToPick } from './utils'
+import { STAGE_W, STAGE_H, LAWN, levels } from './config'
+import { sun, cards, planted, zombies, bullets, suns, booms, mowers, gameOver, started, autoSun, levelIndex, levelClear, allClear, progress, waveBanner, currentLevel, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, nextLevel, backToPick } from './utils'
 
 let refStageWrap = ref()
 let refBgm = ref()
@@ -420,6 +440,18 @@ watch(started, val => {
 	pointer-events: none;
 	z-index: 400;
 }
+.wave-banner {
+	position: absolute;
+	left: 50%;
+	top: 42%;
+	transform: translate(-50%, -50%);
+	width: 320px;
+	z-index: 550;
+	pointer-events: none;
+	&.final {
+		width: 300px;
+	}
+}
 .game-over {
 	position: absolute;
 	left: 50%;
@@ -431,6 +463,28 @@ watch(started, val => {
 	background: rgba(0, 0, 0, 0.6);
 	border: 3px solid #8a5326;
 	border-radius: 12px;
+	&.win {
+		border-color: #6fd12b;
+		h2 {
+			font-size: 30px;
+			color: #ffe08a;
+			text-shadow: 2px 2px 4px #000;
+		}
+		.trophy {
+			display: block;
+			width: 260px;
+			margin: 0 auto 10px;
+		}
+		button.primary {
+			font-weight: bold;
+			color: #173d06;
+			background: linear-gradient(#b6e86a, #6fd12b);
+			border-color: #4a2c10;
+			&:hover {
+				background: linear-gradient(#c9f284, #7de036);
+			}
+		}
+	}
 	.zombies-won {
 		display: block;
 		max-width: 500px;

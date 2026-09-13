@@ -1,7 +1,7 @@
 <template>
 	<div
 		class="zw-zombie"
-		:class="{ slowed: zombie.slowTimer > 0, frozen: zombie.freezeTimer > 0 }"
+		:class="{ slowed: zombie.slowTimer > 0, frozen: zombie.freezeTimer > 0, boss: zombie.isBoss }"
 		:style="{ left: zombie.x + 'px', top: zombie.y + 'px', zIndex: 100 + zombie.row * 10 + 5 }"
 	>
 		<img class="body" :src="gif" alt="" />
@@ -18,7 +18,7 @@ let props = defineProps({
 let gif = computed(() => {
 	let z = props.zombie
 	if (z.dead) return z.dieSrc
-	if (z.eating) return z.attackSrc
+	if (z.eating || z.attackTimer > 0) return z.attackSrc
 	return z.src
 })
 </script>
@@ -52,6 +52,26 @@ let gif = computed(() => {
 			height: 100%;
 			background: #d84c2a;
 			transition: width 0.1s linear;
+		}
+	}
+	/* 僵王 BOSS：体型巨大、血条更宽 */
+	&.boss {
+		transform: translate(-50%, -100%);
+		z-index: 300;
+		.body {
+			width: 320px;
+			max-width: none;
+			max-height: none;
+			filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.55));
+		}
+		.hp {
+			top: -16px;
+			width: 220px;
+			height: 12px;
+			border-width: 2px;
+			.hp-inner {
+				background: linear-gradient(#ff8a5c, #c81f1f);
+			}
 		}
 	}
 }

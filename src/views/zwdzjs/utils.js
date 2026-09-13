@@ -1,5 +1,5 @@
-import { ref } from 'vue'
-import { LAWN, STAGE_W, MAX_PICK, START_SUN, ENABLE_CD, allPlants, defaultPick, bulletSrc, boomSrc, zombieTypes } from './config'
+import { ref, computed } from 'vue'
+import { LAWN, STAGE_W, MAX_PICK, START_SUN, ENABLE_CD, SAFE_COLS, TURN_ZOMBIE_RATE, allPlants, defaultPick, bulletSrc, boomSrc, zombieTypes, levels, boss } from './config'
 
 let uid = 0
 export function nextUid() {
@@ -19,6 +19,18 @@ export let booms = ref([])
 /** 每行一辆小推车 */
 export let mowers = ref([])
 export let gameOver = ref(false)
+/** 当前关卡序号（从 0 开始） */
+export let levelIndex = ref(0)
+/** 本关是否已通关 */
+export let levelClear = ref(false)
+/** 全部关卡是否都通关了 */
+export let allClear = ref(false)
+/** 游戏进度 0~1，用于进度条 */
+export let progress = ref(0)
+/** 大波提示：'' | 'large' | 'final' */
+export let waveBanner = ref('')
+
+export let currentLevel = computed(() => levels[levelIndex.value])
 /** 是否已选完植物开始游戏 */
 export let started = ref(false)
 /** 自动收集阳光开关 */
@@ -90,23 +102,44 @@ function hurtZombie(z, dmg) {
 		z.deadTimer = 0
 	}
 }
-function spawnZombie() {
-	// 只从"已解锁"的僵尸里随机，越往后高阶僵尸越多
-	let pool = zombieTypes.filter(item => gameTime >= item.from)
+/** 僵尸只从当前关卡允许的种类里随机 */
+function spawnZombie(x = STAGE_W + 40, row = randomInt(LAWN.rows)) {
+	let pool = zombieTypes.filter(item => currentLevel.value.types.includes(item.name))
 	let type = pool[randomInt(pool.length)]
-	let row = randomInt(LAWN.rows)
 	zombies.value.push({
 		uid: nextUid(),
 		...type,
 		maxHp: type.hp,
 		row,
-		x: STAGE_W + 40,
+		x,
 		y: cellBottom(row),
 		eating: null,
 		slowTimer: 0,
 		freezeTimer: 0,
 		deadTimer: 0,
 		dead: false
+	})
+}
+
+/** 僵王登场：血厚、走得慢，会定期放出小僵尸，直接碾碎挡路的植物 */
+function spawnBoss() {
+	zombies.value.push({
+		uid: nextUid(),
+		...boss,
+		name: boss.name,
+		isBoss: true,
+		row: boss.row,
+		x: STAGE_W + 160,
+		y: cellBottom(boss.row),
+		hp: currentLevel.value.boss.hp,
+		maxHp: currentLevel.value.boss.hp,
+		speed: currentLevel.value.boss.speed,
+		eating: null,
+		slowTimer: 0,
+		freezeTimer: 0,
+		deadTimer: 0,
+		dead: false,
+		minionTimer: 6
 	})
 }
 
@@ -175,7 +208,8 @@ function fireBullet(plant, type, row = plant.row) {
 
 /** 这一行（或这些行）右侧有没有僵尸 */
 function hasZombieAt(rows, x) {
-	return zombies.value.some(z => !z.dead && rows.includes(z.row) && z.x > x - 20 && z.x < STAGE_W + 60)
+	// BOSS 视作在所有行，任何一列的植物都会朝它开火
+	return zombies.value.some(z => !z.dead && (z.isBoss || rows.includes(z.row)) && z.x > x - 20 && z.x < STAGE_W + 60)
 }
 
 function tickPlants(dt) {
@@ -256,7 +290,8 @@ function tickPlants(dt) {
 					for (let z of zombies.value) {
 						if (z.dead) continue
 						hurtZombie(z, p.attack)
-						z.freezeTimer = p.freeze
+						// BOSS 免疫冰冻
+						if (!z.isBoss) z.freezeTimer = p.freeze
 					}
 					removePlant(p)
 				}
@@ -270,7 +305,8 @@ function tickPlants(dt) {
 						p.timer = 0
 					}
 				} else {
-					let z = zombies.value.find(z => !z.dead && z.row === p.row && z.x > p.x - 10 && z.x < p.x + 130)
+					// BOSS 吞不下
+					let z = zombies.value.find(z => !z.dead && !z.isBoss && z.row === p.row && z.x > p.x - 10 && z.x < p.x + 130)
 					if (z) {
 						hurtZombie(z, 9999)
 						p.state = 'chew'
@@ -303,10 +339,12 @@ function tickBullets(dt) {
 			}
 		}
 		for (let z of zombies.value) {
-			if (z.dead || z.row !== b.row) continue
-			if (b.x > z.x - 25 && b.x < z.x + 35) {
+			if (z.dead) continue
+			// BOSS 体型巨大，任意行打出的子弹只要飞到它身上都能命中
+			let hit = z.isBoss ? b.x > z.x - 130 && b.x < z.x + 130 : z.row === b.row && b.x > z.x - 25 && b.x < z.x + 35
+			if (hit) {
 				hurtZombie(z, b.attack)
-				if (b.type === 'snow') z.slowTimer = 5
+				if (b.type === 'snow' && !z.isBoss) z.slowTimer = 5
 				bullets.value = bullets.value.filter(item => item !== b)
 				break
 			}
@@ -327,7 +365,8 @@ function tickMowers(dt) {
 		}
 		m.x += MOWER_SPEED * dt
 		for (let z of zombies.value) {
-			if (z.dead || z.row !== m.row) continue
+			// 小推车撞不动 BOSS
+			if (z.dead || z.isBoss || z.row !== m.row) continue
 			if (z.x > m.x - 60 && z.x < m.x + 40) hurtZombie(z, 99999)
 		}
 		if (m.x > STAGE_W + 80) m.used = true
@@ -340,6 +379,27 @@ function mowerAlive(row) {
 }
 
 const EAT_DPS = 100
+
+/** BOSS：缓慢推进，碾碎挡路的植物，定期放出小僵尸 */
+function tickBoss(z, dt) {
+	z.x -= z.speed * dt
+	// 走到哪一格就把那一格的植物碾碎
+	for (let row = z.row - 1; row <= z.row + 1; row++) {
+		let col = Math.floor((z.x - LAWN.left) / LAWN.cellW)
+		let p = plantAt(row, col)
+		if (p) removePlant(p)
+	}
+	// 定期放小僵尸
+	z.minionTimer -= dt
+	if (z.minionTimer <= 0) {
+		z.minionTimer = 10
+		z.attackTimer = 0.8
+		spawnZombie(z.x + 40, randomInt(LAWN.rows))
+	}
+	if (z.attackTimer > 0) z.attackTimer -= dt
+	if (z.x < LAWN.left + 60) gameOver.value = true
+}
+
 function tickZombies(dt) {
 	for (let z of [...zombies.value]) {
 		if (z.dead) {
@@ -353,6 +413,10 @@ function tickZombies(dt) {
 			continue
 		}
 		if (z.slowTimer > 0) z.slowTimer -= dt
+		if (z.isBoss) {
+			tickBoss(z, dt)
+			continue
+		}
 		let col = Math.floor((z.x - LAWN.left) / LAWN.cellW)
 		let p = plantAt(z.row, col)
 		// 走到植物身边就开始啃
@@ -369,18 +433,68 @@ function tickZombies(dt) {
 	}
 }
 
+/** 计算本关进度 0~1（有 BOSS 的关卡按 BOSS 血量算） */
+function updateProgress() {
+	let level = currentLevel.value
+	if (level.boss) {
+		if (!bossSpawned) {
+			progress.value = Math.min(0.3, (gameTime / level.boss.at) * 0.3)
+		} else {
+			let alive = zombies.value.find(z => z.isBoss && !z.dead)
+			let ratio = alive ? 1 - alive.hp / alive.maxHp : 1
+			progress.value = Math.min(1, 0.3 + 0.7 * ratio)
+		}
+	} else {
+		progress.value = Math.min(1, gameTime / level.duration)
+	}
+}
+
+function winLevel() {
+	levelClear.value = true
+	if (levelIndex.value >= levels.length - 1) allClear.value = true
+}
+
 function tickSpawn(dt) {
+	let level = currentLevel.value
 	// 天降阳光
 	skySunTimer -= dt
 	if (skySunTimer <= 0) {
 		skySunTimer = 10
 		genSun(LAWN.left + 60 + randomInt(LAWN.cols * LAWN.cellW - 120), -40, LAWN.top + 40 + randomInt(LAWN.rows * LAWN.cellH - 80))
 	}
-	// 僵尸：越到后面刷得越快
+	// 关卡内僵尸刷新间隔由 spawn.from 递减到 spawn.to
+	let interval = level.spawn.from + (level.spawn.to - level.spawn.from) * progress.value
 	spawnTimer -= dt
 	if (spawnTimer <= 0) {
-		spawnTimer = Math.max(4, 12 - gameTime / 20)
+		spawnTimer = interval
 		spawnZombie()
+	}
+	// 大波僵尸
+	if (level.bigWaveCount && !bigWaveDone && progress.value >= level.bigWave) {
+		bigWaveDone = true
+		waveBanner.value = 'large'
+		bannerTimer = 2.5
+		for (let i = 0; i < level.bigWaveCount; i++) {
+			setTimeout(() => spawnZombie(STAGE_W + 40 + i * 60), i * 200)
+		}
+	}
+	// BOSS 登场
+	if (level.boss && !bossSpawned && gameTime >= level.boss.at) {
+		bossSpawned = true
+		waveBanner.value = 'final'
+		bannerTimer = 2.5
+		spawnBoss()
+	}
+	// 通关判定
+	if (level.boss) {
+		if (bossSpawned && !zombies.value.some(z => z.isBoss && !z.dead)) winLevel()
+	} else if (gameTime >= level.duration) {
+		winLevel()
+	}
+	// 提示横幅自动消失
+	if (bannerTimer > 0) {
+		bannerTimer -= dt
+		if (bannerTimer <= 0) waveBanner.value = ''
 	}
 }
 
@@ -390,13 +504,16 @@ let rafId = 0
 let gameTime = 0
 let skySunTimer = 4
 let spawnTimer = 8
+let bossSpawned = false
+let bigWaveDone = false
+let bannerTimer = 0
 
 function loop(t) {
 	if (!lastTime) lastTime = t
 	let dt = Math.min((t - lastTime) / 1000, 0.1)
 	lastTime = t
-	gameTime += dt
-	if (!gameOver.value) {
+	if (!gameOver.value && !levelClear.value) {
+		gameTime += dt
 		tickCards(dt)
 		tickBooms(dt)
 		tickSuns(dt)
@@ -405,6 +522,7 @@ function loop(t) {
 		tickMowers(dt)
 		tickZombies(dt)
 		tickSpawn(dt)
+		updateProgress()
 	}
 	rafId = requestAnimationFrame(loop)
 }
@@ -425,25 +543,39 @@ function resetState() {
 	suns.value = []
 	booms.value = []
 	gameOver.value = false
+	levelClear.value = false
+	progress.value = 0
+	waveBanner.value = ''
 	cards.value.forEach(card => (card.cd = 0))
 	gameTime = 0
 	skySunTimer = 4
 	spawnTimer = 8
+	bossSpawned = false
+	bigWaveDone = false
+	bannerTimer = 0
 }
 
-/** 选完植物后开始游戏 */
+/** 选完植物后从第一关开始 */
 export function startGame() {
 	cards.value = picked.value.map(name => {
 		let plant = allPlants.find(item => item.name === name)
 		return { ...plant, cd: 0, cdMax: ENABLE_CD ? plant.cd : 0 }
 	})
+	levelIndex.value = 0
+	allClear.value = false
 	resetState()
 	started.value = true
 	lastTime = 0
 	rafId = requestAnimationFrame(loop)
 }
 
-/** 重新开始当前这局（沿用已选植物） */
+/** 进入下一关 */
+export function nextLevel() {
+	if (levelIndex.value < levels.length - 1) levelIndex.value++
+	resetState()
+}
+
+/** 重新开始当前这关（沿用已选植物） */
 export function resetGame() {
 	resetState()
 }
