@@ -61,11 +61,38 @@ export function plantAt(row, col) {
 }
 
 // ---------------- 种植 ----------------
+/** 植物变异：原地冒出一只僵尸，植物消失 */
+function mutateToZombie(row, col) {
+	let x = cellCenter(col)
+	booms.value.push({ uid: nextUid(), x, y: cellBottom(row) - 40, src: '/images/interface/ZombieHand.png', w: 90, life: 0.7 })
+	let pool = zombieTypes.filter(item => currentLevel.value.types.includes(item.name))
+	let type = pool[0] || zombieTypes[0]
+	zombies.value.push({
+		uid: nextUid(),
+		...type,
+		maxHp: type.hp,
+		row,
+		x,
+		y: cellBottom(row),
+		mutant: true,
+		eating: null,
+		slowTimer: 0,
+		freezeTimer: 0,
+		deadTimer: 0,
+		dead: false
+	})
+}
+
 export function tryPlant(card, row, col) {
-	if (gameOver.value || sun.value < card.cost || card.cd > 0) return false
+	if (gameOver.value || levelClear.value || sun.value < card.cost || card.cd > 0) return false
 	if (plantAt(row, col)) return false
 	sun.value -= card.cost
 	card.cd = card.cdMax
+	// 种在家门口以外的植物有概率当场变异成僵尸
+	if (col >= SAFE_COLS && Math.random() < TURN_ZOMBIE_RATE) {
+		mutateToZombie(row, col)
+		return true
+	}
 	planted.value.push({
 		uid: nextUid(),
 		name: card.name,

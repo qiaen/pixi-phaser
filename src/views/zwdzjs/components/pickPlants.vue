@@ -12,6 +12,7 @@
 					<b :class="{ full: picked.length >= MAX_PICK }">{{ picked.length }}</b>
 					/ {{ MAX_PICK }}
 				</p>
+				<p class="warn">注意：种在「家门口」安全线之外的植物，有 {{ TURN_ZOMBIE_RATE * 100 }}% 概率当场变异成僵尸</p>
 			</div>
 			<div class="head-side right">
 				<button class="pick-btn ghost" @click="clearAll">清空</button>
@@ -45,7 +46,7 @@
 	</div>
 </template>
 <script setup>
-import { MAX_PICK, allPlants, defaultPick, levels } from '../config'
+import { MAX_PICK, allPlants, defaultPick, levels, TURN_ZOMBIE_RATE } from '../config'
 import { picked, togglePlant, startGame } from '../utils'
 
 function isPicked(name) {
@@ -93,6 +94,11 @@ function clearAll() {
 			font-size: 30px;
 			letter-spacing: 4px;
 			text-shadow: 2px 2px 4px #000;
+		}
+		.warn {
+			margin-top: 4px;
+			font-size: 13px;
+			color: #ffb36a;
 		}
 		.tip {
 			margin-top: 6px;

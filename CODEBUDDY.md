@@ -100,5 +100,6 @@ src/
   - `components/progressMeter.vue`：右下角 PvZ 风格关卡进度条（FlagMeter* 素材），显示第几关/关卡名与进度，BOSS 关按 BOSS 掉血推进。
   - 关卡（`config.js` 的 `levels`，共 4 关，难度递增）：僵尸种类池、刷新间隔（`spawn.from → spawn.to` 随进度递减）、大波僵尸（`bigWave` / `bigWaveCount`，配合 `LargeWave.gif`）逐关增强；第 4 关为 BOSS 关，超过 `boss.at` 秒后僵王 `LGBOSS` 登场（`FinalWave.gif` 提示），击杀 BOSS 即通关并显示 `trophy.png`。坚守 `duration` 秒即可通过普通关卡，中途僵尸突破（该行小推车已用掉）则失败。
   - `components/plant.vue` `zombie.vue` `sun.vue` `mower.vue`：实体组件（植物/僵尸带血条与状态贴图、阳光可点击收集、小推车 5 行各一辆，僵尸走到左边界即触发，一路向右碾平整行，用掉后该行再被突破才判负）。
+  - 变异规则：草坪左侧 `SAFE_COLS`（默认 2）列是「家门口」安全区（舞台上画有虚线安全线），种在安全区之外的植物有 `TURN_ZOMBIE_RATE`（默认 40%）概率当场变成僵尸（原地冒出僵尸 + `ZombieHand.png` 特效）。
   - 植物特性：向日葵产阳光、豌豆/寒冰（减速）/双发射手射击、三线射手打相邻三行、坚果墙 4000 血、高坚果 8000 血、土豆雷埋设 14s 后炸单格、窝瓜压扁踩中者、樱桃炸弹 1.2s 后炸 3x3、火爆辣椒烧整行、寒冰菇全场冻结（僵尸停止行动）、大嘴花吞噬后咀嚼 20s、火炬树桩把穿过的豌豆变火豆（伤害翻倍）、地刺持续伤害踩过的僵尸。
 - 注意：`src/views/zw/index.vue` 引用了不存在的 `./images/interface/ZombiesWon.png`，会导致 `npm run build` 失败（dev 不受影响）。

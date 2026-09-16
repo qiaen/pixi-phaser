@@ -37,6 +37,11 @@
 					<img v-if="canDrop(cell)" class="ghost" :src="dragging.gif" alt="" />
 				</div>
 
+				<!-- 家门口安全线 -->
+				<div class="safe-line" :style="safeLineStyle">
+					<span>家门口</span>
+				</div>
+
 				<plantView v-for="p in planted" :key="p.uid" :plant="p" />
 				<mowerView v-for="m in aliveMowers" :key="m.uid" :mower="m" />
 				<zombieView v-for="z in zombies" :key="z.uid" :zombie="z" />
@@ -106,7 +111,7 @@ import sunView from './components/sun.vue'
 import mowerView from './components/mower.vue'
 import progressMeter from './components/progressMeter.vue'
 import pickPlants from './components/pickPlants.vue'
-import { STAGE_W, STAGE_H, LAWN, levels } from './config'
+import { STAGE_W, STAGE_H, LAWN, levels, SAFE_COLS } from './config'
 import { sun, cards, planted, zombies, bullets, suns, booms, mowers, gameOver, started, autoSun, levelIndex, levelClear, allClear, progress, waveBanner, currentLevel, plantAt, tryPlant, shovelPlant, collectSun, stopGame, resetGame, nextLevel, backToPick } from './utils'
 
 let refStageWrap = ref()
@@ -178,6 +183,15 @@ function cellStyle(cell) {
 		top: LAWN.top + cell.row * LAWN.cellH + 'px'
 	}
 }
+/** 安全区（家门口）右边界，超出这条线的植物有变异风险 */
+let safeLineStyle = computed(() => {
+	return {
+		left: LAWN.left + SAFE_COLS * LAWN.cellW + 'px',
+		top: LAWN.top + 'px',
+		height: LAWN.rows * LAWN.cellH + 'px'
+	}
+})
+
 function bulletStyle(b) {
 	return {
 		left: b.x + 'px',
@@ -394,6 +408,22 @@ watch(started, val => {
 	background-size: 100% 100%;
 	&.shoveling {
 		cursor: none;
+	}
+}
+.safe-line {
+	position: absolute;
+	border-right: 2px dashed rgba(255, 255, 255, 0.45);
+	pointer-events: none;
+	z-index: 90;
+	span {
+		position: absolute;
+		left: 6px;
+		bottom: 2px;
+		font-size: 12px;
+		font-weight: bold;
+		color: rgba(255, 255, 255, 0.65);
+		text-shadow: 1px 1px 2px #000;
+		white-space: nowrap;
 	}
 }
 .cell {
